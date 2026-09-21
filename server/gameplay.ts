@@ -1,5 +1,6 @@
 import { cardsOfType } from "../shared/cards";
 import type {
+	CardStatus,
 	Game,
 	GameCard,
 	GameEvent,
@@ -259,19 +260,12 @@ export function resolveCombat(game: Game): "over" | "continue" {
 		for (const bot of player.board) {
 			if (!bot) continue;
 
-			bot.status = bot.status
-				.map((status) =>
-					status.kind === "temporary"
-						? {
-								...status,
-								turnsRemaining: status.turnsRemaining - 1,
-							}
-						: status,
-				)
-				.filter(
-					(status) =>
-						status.kind === "permanent" || status.turnsRemaining > 0,
-				);
+			bot.status = bot.status.flatMap<CardStatus>((status) => {
+				if (status.kind !== "temporary") return [status];
+				return status.turnsRemaining - 1 > 0
+					? [{ ...status, turnsRemaining: status.turnsRemaining - 1 }]
+					: [];
+			});
 		}
 	}
 
@@ -290,11 +284,11 @@ export function resolveCombat(game: Game): "over" | "continue" {
 			const sides = [0, 2].filter((s) => player.board[s]);
 			if (sides.length) {
 				const s = sides[Math.floor(Math.random() * sides.length)];
-				player.board[1] = player.board[s];
-				player.board[s] = null;
+				[player.board[1], player.board[s]] = [player.board[s], null];
 			}
 		}
 	}
+
 	for (const player of [a, b]) {
 		for (const bot of player.board) {
 			if (bot?.name.startsWith("MMM-Sahur")) {
@@ -309,13 +303,8 @@ export function resolveCombat(game: Game): "over" | "continue" {
 		game.phase = "over";
 		return "over";
 	}
-	if (aBots === 0) {
-		game.winner = b.name;
-		game.phase = "over";
-		return "over";
-	}
-	if (bBots === 0) {
-		game.winner = a.name;
+	if (aBots === 0 || bBots === 0) {
+		game.winner = aBots === 0 ? b.name : a.name;
 		game.phase = "over";
 		return "over";
 	}
