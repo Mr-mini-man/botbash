@@ -113,13 +113,14 @@ function FlyingCard({
 	const to = targetPoint(event, viewer);
 	const isAction = event.kind === "action";
 	const effect = event.card.effect;
-	let actionLabel = "";
-
+	let label = "";
 	if (effect?.kind === "stun") {
-		actionLabel = "STUNNED";
+		label = "STUNNED";
+	} else if (effect?.kind === "destroy") {
+		label = "DESTROY";
 	} else if (effect) {
 		const sign = effect.kind === "damage" ? "-" : "+";
-		actionLabel = `${sign}${effect.amount}`;
+		label = `${sign}${effect.amount}`;
 	}
 
 	// The whole timeline lives in ONE spring (fly, then the action flash), so
@@ -205,7 +206,7 @@ function FlyingCard({
 						y={props.labelY}
 						width={CARD_W}
 						align="center"
-						text={actionLabel}
+						text={label}
 						fontSize={22}
 						fontFamily="Orbitron, sans-serif"
 						fontStyle="bold"
